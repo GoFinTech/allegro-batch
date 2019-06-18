@@ -1,0 +1,20 @@
+{
+  "name": "gofintech/allegro-batch",
+  "description": "Allegro extension for constantly running tasks",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Antanas Kompanas",
+      "email": "a.kompanas@gofintech.lt"
+    }
+  ],
+  "require": {
+    "php": ">=7.2",
+    "gofintech/allegro": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "GoFinTech\\Allegro\\Batch\\": "src/"
+    }
+  }
+}
