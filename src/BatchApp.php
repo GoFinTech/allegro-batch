@@ -46,14 +46,19 @@ class BatchApp
 
         $batch = $config[$configSection];
         $this->handlerName = $batch['handler'];
-        $this->sleepSeconds = $batch['sleepSeconds'];
+        $this->sleepSeconds = $batch['sleepSeconds'] ?? 60;
     }
 
-    public function run(): void
+    private function prepare(): void
     {
         $this->app->getContainer()->register(BatchApp::class)->setSynthetic(true);
         $this->app->getContainer()->set(BatchApp::class, $this);
         $this->app->compile();
+    }
+
+    public function run(): void
+    {
+        $this->prepare();
 
         $this->log->notice("Allegro batch {$this->appName} started, sleep interval {$this->sleepSeconds} seconds");
 
@@ -76,6 +81,17 @@ class BatchApp
                 $this->sleep();
             }
         }
+    }
+
+    public function runOnce(): void
+    {
+        $this->prepare();
+
+        $this->log->notice("Allegro batch {$this->appName} started, running once");
+
+        /** @var BatchInterface $task */
+        $task = $this->app->getContainer()->get($this->handlerName);
+        $task->run();
     }
 
     /**
