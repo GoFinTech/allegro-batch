@@ -13,12 +13,23 @@ namespace GoFinTech\Allegro\Batch;
 
 
 use GoFinTech\Allegro\AllegroApp;
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Yaml\Yaml;
 
 class BatchApp
 {
+    public const RUN_CONTINUOUSLY = 'continuous';
+    public const RUN_ONCE = 'once';
+    public const RUN_TO_COMPLETION = 'complete';
+
+    private static $ALLOWED_RUN_MODES = [
+        self::RUN_CONTINUOUSLY,
+        self::RUN_ONCE,
+        self::RUN_TO_COMPLETION,
+    ];
+
     /** @var AllegroApp */
     private $app;
     /** @var LoggerInterface */
@@ -29,6 +40,10 @@ class BatchApp
     private $handlerName;
     /** @var int */
     private $sleepSeconds;
+    /** @var string */
+    private $runMode;
+    /** @var bool */
+    private $doPing;
 
     public function __construct(AllegroApp $app, string $configSection)
     {
@@ -47,6 +62,20 @@ class BatchApp
         $batch = $config[$configSection];
         $this->handlerName = $batch['handler'];
         $this->sleepSeconds = $batch['sleepSeconds'] ?? 60;
+
+        $this->runMode = $batch['mode'] ?? self::RUN_CONTINUOUSLY;
+        if (false === array_search($this->runMode, static::$ALLOWED_RUN_MODES))
+            throw new LogicException("Allegro batch {$this->appName} has invalid mode={$this->runMode} configured");
+
+        if (isset($batch['ping'])) {
+            $this->doPing = $batch['ping'];
+        }
+        else if ($this->runMode == self::RUN_ONCE) {
+            $this->doPing = false;
+        }
+        else {
+            $this->doPing = true;
+        }
     }
 
     private function prepare(): void
@@ -60,7 +89,10 @@ class BatchApp
     {
         $this->prepare();
 
-        $this->log->notice("Allegro batch {$this->appName} started, sleep interval {$this->sleepSeconds} seconds");
+        $this->log->notice("Allegro batch {$this->appName} started, mode={$this->runMode}");
+        if ($this->runMode == self::RUN_CONTINUOUSLY) {
+            $this->log->notice("Sleep interval: {$this->sleepSeconds} seconds");
+        }
 
         while (true) {
             if ($this->app->isTermSignalReceived()) {
@@ -72,26 +104,23 @@ class BatchApp
             $task = $this->app->getContainer()->get($this->handlerName);
 
             $rerun = $task->run();
-            $this->app->ping();
 
-            if ($rerun) {
+            if ($this->doPing)
+                $this->app->ping();
+
+            if ($this->runMode == self::RUN_ONCE) {
+                break;
+            }
+            else if ($rerun) {
                 continue;
+            }
+            else if ($this->runMode == self::RUN_TO_COMPLETION) {
+                break;
             }
             else {
                 $this->sleep();
             }
         }
-    }
-
-    public function runOnce(): void
-    {
-        $this->prepare();
-
-        $this->log->notice("Allegro batch {$this->appName} started, running once");
-
-        /** @var BatchInterface $task */
-        $task = $this->app->getContainer()->get($this->handlerName);
-        $task->run();
     }
 
     /**
