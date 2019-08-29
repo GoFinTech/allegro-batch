@@ -80,8 +80,15 @@ class BatchApp
 
     private function prepare(): void
     {
-        $this->app->getContainer()->register(BatchApp::class)->setSynthetic(true);
-        $this->app->getContainer()->set(BatchApp::class, $this);
+        $container = $this->app->getContainer();
+
+        $container->register(BatchApp::class)->setSynthetic(true);
+        $container->set(BatchApp::class, $this);
+
+        $handlerDefinition = $container->getDefinition($this->handlerName);
+        if (!$handlerDefinition->isPublic())
+            $handlerDefinition->setPublic(true);
+
         $this->app->compile();
     }
 
