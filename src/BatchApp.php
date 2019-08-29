@@ -86,8 +86,10 @@ class BatchApp
         $container->set(BatchApp::class, $this);
 
         $handlerDefinition = $container->getDefinition($this->handlerName);
-        if (!$handlerDefinition->isPublic())
+        // The following seems to be a bug in Symfony DI where by default both are true
+        if ($handlerDefinition->isPrivate() || !$handlerDefinition->isPublic()) {
             $handlerDefinition->setPublic(true);
+        }
 
         $this->app->compile();
     }
