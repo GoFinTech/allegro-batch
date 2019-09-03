@@ -10,7 +10,7 @@
   ],
   "require": {
     "php": ">=7.2",
-    "gofintech/allegro": "^1.1"
+    "gofintech/allegro": "^1.2"
   },
   "autoload": {
     "psr-4": {
