@@ -3,7 +3,7 @@
 /*
  * This file is part of the Allegro framework.
  *
- * (c) 2019 Go Financial Technologies, JSC
+ * (c) 2019,2020 Go Financial Technologies, JSC
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -23,11 +23,13 @@ class BatchApp
     public const RUN_CONTINUOUSLY = 'continuous';
     public const RUN_ONCE = 'once';
     public const RUN_TO_COMPLETION = 'complete';
+    public const RUN_TO_COMPLETION_SLOW = 'complete-slow';
 
     private static $ALLOWED_RUN_MODES = [
         self::RUN_CONTINUOUSLY,
         self::RUN_ONCE,
         self::RUN_TO_COMPLETION,
+        self::RUN_TO_COMPLETION_SLOW,
     ];
 
     /** @var AllegroApp */
@@ -99,7 +101,7 @@ class BatchApp
         $this->prepare();
 
         $this->log->notice("Allegro batch {$this->appName} started, mode={$this->runMode}");
-        if ($this->runMode == self::RUN_CONTINUOUSLY) {
+        if ($this->runMode == self::RUN_CONTINUOUSLY || $this->runMode == self::RUN_TO_COMPLETION_SLOW) {
             $this->log->notice("Sleep interval: {$this->sleepSeconds} seconds");
         }
 
@@ -121,9 +123,12 @@ class BatchApp
                 break;
             }
             else if ($rerun) {
+                if ($this->runMode == self::RUN_TO_COMPLETION_SLOW) {
+                    $this->sleep();
+                }
                 continue;
             }
-            else if ($this->runMode == self::RUN_TO_COMPLETION) {
+            else if ($this->runMode == self::RUN_TO_COMPLETION || $this->runMode == self::RUN_TO_COMPLETION_SLOW) {
                 break;
             }
             else {
