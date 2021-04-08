@@ -57,9 +57,9 @@ class BatchApp
     public function __construct($configSection, $legacyConfigSection = null)
     {
         $this->app = AllegroApp::resolveConstructorParameters("BatchApp", $configSection, $legacyConfigSection);
-        $this->log = $app->getLogger();
+        $this->log = $this->app->getLogger();
 
-        $this->loadConfiguration($app->getConfigLocator(), $configSection);
+        $this->loadConfiguration($this->app->getConfigLocator(), $configSection);
     }
 
     /**
