@@ -162,8 +162,8 @@ class BatchApp
     {
         $toSleep = $this->sleepSeconds;
         $toPing = 0;
-        while ($toSleep > 10 && !$this->app->isTermSignalReceived()) {
-            sleep(10);
+        while ($toSleep > 0 && !$this->app->isTermSignalReceived()) {
+            sleep(min(10, $toSleep));
             $toSleep -= 10;
             $toPing++;
             if ($toPing == 4) {
@@ -171,6 +171,5 @@ class BatchApp
                 $toPing = 0;
             }
         }
-        sleep($toSleep);
     }
 }
