@@ -62,6 +62,16 @@ class BatchApp
         $this->loadConfiguration($app->getConfigLocator(), $configSection);
     }
 
+    /**
+     * Shorthand for instantiating a BatchApp with specified config and calling run().
+     * @param string $configSection
+     */
+    public static function exec(string $configSection): void
+    {
+        $batch = new BatchApp($configSection);
+        $batch->run();
+    }
+    
     private function loadConfiguration(FileLocator $locator, string $configSection): void
     {
         $config = Yaml::parseFile($locator->locate('batch.yml'));
