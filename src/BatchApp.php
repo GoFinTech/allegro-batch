@@ -3,7 +3,7 @@
 /*
  * This file is part of the Allegro framework.
  *
- * (c) 2019,2020 Go Financial Technologies, JSC
+ * (c) 2019-2021 Go Financial Technologies, JSC
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -13,6 +13,7 @@ namespace GoFinTech\Allegro\Batch;
 
 
 use GoFinTech\Allegro\AllegroApp;
+use InvalidArgumentException;
 use LogicException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\FileLocator;
@@ -47,9 +48,15 @@ class BatchApp
     /** @var bool */
     private $doPing;
 
-    public function __construct(AllegroApp $app, string $configSection)
+    /**
+     * BatchApp constructor.
+     * @param string|AllegroApp $configSection config section name in batch.yml.
+     *      Might be an AllegroApp instance for backward compatibility.
+     * @param string|null $legacyConfigSection config section name if app instance is passed as the first argument
+     */
+    public function __construct($configSection, $legacyConfigSection = null)
     {
-        $this->app = $app;
+        $this->app = AllegroApp::resolveConstructorParameters("BatchApp", $configSection, $legacyConfigSection);
         $this->log = $app->getLogger();
 
         $this->loadConfiguration($app->getConfigLocator(), $configSection);
